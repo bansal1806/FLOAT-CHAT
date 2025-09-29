@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import dynamic from 'next/dynamic'
+import { realtimeDataService, PredictionData } from '@/lib/realtimeData'
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false })
 import { 
@@ -18,7 +19,8 @@ import {
   Waves,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  Activity
 } from 'lucide-react'
 
 interface Prediction {
@@ -37,6 +39,29 @@ export default function PredictiveAnalytics() {
   const [selectedPrediction, setSelectedPrediction] = useState<string>('temperature')
   const [timeframe, setTimeframe] = useState('30d')
   const [isGenerating, setIsGenerating] = useState(false)
+  const [realtimePredictions, setRealtimePredictions] = useState<PredictionData | null>(null)
+  const [isRealtime, setIsRealtime] = useState(true)
+
+  // Real-time predictions subscription
+  useEffect(() => {
+    if (isRealtime) {
+      realtimeDataService.start()
+      
+      const handlePredictionUpdate = (data: PredictionData) => {
+        setRealtimePredictions(data)
+      }
+      
+      realtimeDataService.subscribe('predictions', handlePredictionUpdate)
+      
+      // Initial data load
+      setRealtimePredictions(realtimeDataService.getPredictionData())
+      
+      return () => {
+        realtimeDataService.unsubscribe('predictions', handlePredictionUpdate)
+        realtimeDataService.stop()
+      }
+    }
+  }, [isRealtime])
 
   const predictions: Prediction[] = [
     {
@@ -183,7 +208,7 @@ export default function PredictiveAnalytics() {
         <div className="lg:col-span-3">
           <div className="bg-deep-800/50 backdrop-blur-sm border border-deep-700 rounded-xl overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-orange-500/20 to-red-500/20 border-b border-deep-700 p-4">
+            <div className="bg-gradient-to-r from-ocean-500/20 to-aqua-500/20 border-b border-deep-700 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-white">AI Predictive Analytics</h2>
@@ -191,9 +216,20 @@ export default function PredictiveAnalytics() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => setIsRealtime(!isRealtime)}
+                    className={`px-3 py-2 rounded-lg transition-colors ${
+                      isRealtime 
+                        ? 'bg-aqua-500/20 text-aqua-400 border border-aqua-500/30' 
+                        : 'bg-deep-700 text-gray-400 hover:text-white'
+                    }`}
+                    title="Real-time Predictions"
+                  >
+                    <Activity className={`w-4 h-4 ${isRealtime ? 'animate-pulse' : ''}`} />
+                  </button>
+                  <button
                     onClick={handleGeneratePrediction}
                     disabled={isGenerating}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 bg-dual-tone text-white rounded-lg hover:shadow-aqua transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     <Brain className={`w-4 h-4 ${isGenerating ? 'animate-pulse' : ''}`} />
                     {isGenerating ? 'Generating...' : 'Generate Prediction'}

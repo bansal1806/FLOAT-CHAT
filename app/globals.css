@@ -143,6 +143,41 @@ a {
   transform: translateY(-2px);
 }
 
+/* Dual-tone ocean color utilities */
+.text-gradient-dual {
+  background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 50%, #2dd4bf 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-ocean-surface {
+  background: linear-gradient(180deg, #0ea5e9 0%, #14b8a6 50%, #0d9488 100%);
+}
+
+.bg-dual-tone {
+  background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 50%, #2dd4bf 100%);
+}
+
+.bg-aqua-gradient {
+  background: linear-gradient(135deg, #0d9488 0%, #14b8a6 50%, #2dd4bf 100%);
+}
+
+.bg-teal-gradient {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #5eead4 100%);
+}
+
+.border-dual-tone {
+  border-image: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 50%, #2dd4bf 100%) 1;
+}
+
+.shadow-ocean {
+  box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3);
+}
+
+.shadow-aqua {
+  box-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
+}
+
 /* Chat bubble animations */
 @keyframes chat-bubble-in {
   0% {

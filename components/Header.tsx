@@ -28,7 +28,7 @@ export default function Header() {
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-3"
         >
-          <div className="w-10 h-10 bg-gradient-to-r from-ocean-500 to-cyan-500 rounded-lg flex items-center justify-center">
+          <div className="w-10 h-10 bg-dual-tone rounded-lg flex items-center justify-center">
             <Waves className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -121,7 +121,7 @@ export default function Header() {
           >
             <div className="px-6 py-4 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-ocean-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-dual-tone rounded-lg flex items-center justify-center">
                   <Waves className="w-4 h-4 text-white" />
                 </div>
                 <span className="text-white font-semibold">FloatChat</span>

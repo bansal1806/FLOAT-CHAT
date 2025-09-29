@@ -14,9 +14,11 @@ import {
   MapPin,
   Thermometer,
   Waves,
-  TrendingUp
+  TrendingUp,
+  Activity
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { realtimeDataService, ArgoFloatData, OceanMetrics } from '@/lib/realtimeData'
 
 interface Message {
   id: string
@@ -39,11 +41,43 @@ export default function ChatInterface() {
   const [inputValue, setInputValue] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
+  const [realtimeData, setRealtimeData] = useState<{ argo: ArgoFloatData[], metrics: OceanMetrics | null }>({ argo: [], metrics: null })
+  const [isRealtime, setIsRealtime] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  // Real-time data subscription
+  useEffect(() => {
+    if (isRealtime) {
+      realtimeDataService.start()
+      
+      const handleArgoUpdate = (data: ArgoFloatData[]) => {
+        setRealtimeData(prev => ({ ...prev, argo: data }))
+      }
+      
+      const handleMetricsUpdate = (data: OceanMetrics) => {
+        setRealtimeData(prev => ({ ...prev, metrics: data }))
+      }
+      
+      realtimeDataService.subscribe('argo', handleArgoUpdate)
+      realtimeDataService.subscribe('metrics', handleMetricsUpdate)
+      
+      // Initial data load
+      setRealtimeData({
+        argo: realtimeDataService.getArgoFloats(),
+        metrics: realtimeDataService.getOceanMetrics()
+      })
+      
+      return () => {
+        realtimeDataService.unsubscribe('argo', handleArgoUpdate)
+        realtimeDataService.unsubscribe('metrics', handleMetricsUpdate)
+        realtimeDataService.stop()
+      }
+    }
+  }, [isRealtime])
 
   useEffect(() => {
     scrollToBottom()
@@ -152,7 +186,7 @@ export default function ChatInterface() {
       className={`flex gap-3 mb-4 ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
     >
       {message.type === 'assistant' && (
-        <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 bg-dual-tone rounded-full flex items-center justify-center flex-shrink-0">
           <Bot className="w-4 h-4 text-white" />
         </div>
       )}
@@ -160,7 +194,7 @@ export default function ChatInterface() {
       <div className={`max-w-[70%] ${message.type === 'user' ? 'order-first' : ''}`}>
         <div className={`rounded-2xl px-4 py-3 ${
           message.type === 'user' 
-            ? 'bg-gradient-to-r from-ocean-500 to-cyan-500 text-white' 
+            ? 'bg-dual-tone text-white' 
             : 'bg-deep-800 text-gray-100 border border-deep-700'
         }`}>
           <p className="text-sm leading-relaxed">{message.content}</p>
@@ -176,7 +210,7 @@ export default function ChatInterface() {
               {Object.entries(message.data).map(([key, value]) => (
                 <div key={key} className="flex items-center gap-2">
                   {key.includes('temp') && <Thermometer className="w-3 h-3 text-red-400" />}
-                  {key.includes('salinity') && <Waves className="w-3 h-3 text-blue-400" />}
+                  {key.includes('salinity') && <Waves className="w-3 h-3 text-aqua-400" />}
                   {key.includes('float') && <MapPin className="w-3 h-3 text-green-400" />}
                   {key.includes('speed') && <TrendingUp className="w-3 h-3 text-orange-400" />}
                   <span className="text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}:</span>
@@ -204,9 +238,9 @@ export default function ChatInterface() {
     <div className="max-w-4xl mx-auto">
       <div className="bg-deep-800/50 backdrop-blur-sm border border-deep-700 rounded-xl overflow-hidden">
         {/* Chat Header */}
-        <div className="bg-gradient-to-r from-ocean-500/20 to-cyan-500/20 border-b border-deep-700 p-4">
+        <div className="bg-gradient-to-r from-ocean-500/20 to-aqua-500/20 border-b border-deep-700 p-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-dual-tone rounded-full flex items-center justify-center">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -214,6 +248,17 @@ export default function ChatInterface() {
               <p className="text-sm text-gray-400">Quantum-enhanced ocean consciousness • ARGO data specialist</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
+              <button
+                onClick={() => setIsRealtime(!isRealtime)}
+                className={`p-1 rounded-lg transition-colors ${
+                  isRealtime 
+                    ? 'bg-aqua-500/20 text-aqua-400' 
+                    : 'bg-deep-700 text-gray-400 hover:text-white'
+                }`}
+                title="Real-time Data"
+              >
+                <Activity className={`w-4 h-4 ${isRealtime ? 'animate-pulse' : ''}`} />
+              </button>
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <span className="text-xs text-green-400">Online</span>
             </div>
@@ -234,12 +279,12 @@ export default function ChatInterface() {
               animate={{ opacity: 1 }}
               className="flex gap-3 mb-4"
             >
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-dual-tone rounded-full flex items-center justify-center">
                 <Bot className="w-4 h-4 text-white" />
               </div>
               <div className="bg-deep-800 border border-deep-700 rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-aqua-400" />
                   <span className="text-sm text-gray-400">AI is thinking...</span>
                 </div>
               </div>
@@ -307,7 +352,7 @@ export default function ChatInterface() {
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSendMessage(inputValue)}
               disabled={!inputValue.trim() || isLoading}
-              className="p-2 bg-gradient-to-r from-ocean-500 to-cyan-500 text-white rounded-lg hover:from-ocean-600 hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="p-2 bg-dual-tone text-white rounded-lg hover:shadow-aqua disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <Send className="w-5 h-5" />
             </motion.button>
