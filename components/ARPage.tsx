@@ -1,20 +1,14 @@
-// 
-
-
-
-
 'use client';
 
 import { useEffect, useRef } from 'react';
 
-// TypeScript: let compiler know about global window.AFRAME
+// Tell TypeScript about global window.AFRAME
 declare global {
   interface Window {
     AFRAME?: any;
   }
 }
 
-// Mock ARGO float data
 const mockFloats = [
   {
     id: 'A1',
@@ -34,11 +28,10 @@ const mockFloats = [
   },
 ];
 
-export default function ARPage() {
+export default function EnhancedARPage() {
   const sceneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Only load scripts client-side and once
     if (typeof window !== 'undefined' && !window.AFRAME) {
       const aframeScript = document.createElement('script');
       aframeScript.src = 'https://aframe.io/releases/1.3.0/aframe.min.js';
@@ -52,43 +45,54 @@ export default function ARPage() {
     }
   }, []);
 
-  // Build marker entity HTML for floats
   const markerHtml = encodeURIComponent(`
     <a-marker preset="hiro">
       ${mockFloats.map((float, i) => `
-        <a-entity 
-          position="0 ${i * 1.2 + 0.5} 0" 
-          scale="0.4 0.4 0.4"
+        <a-entity
+          position="0 ${i * 1.3 + 0.6} 0"
+          animation="property: position; dir: alternate; dur: 2800; easing: easeInOutSine; loop: true; to: 0 ${i * 1.3 + 0.9} 0"
+          scale="0.5 0.5 0.5"
         >
-          <a-box color="#0ea5e9"></a-box>
-          <a-entity
-            position="0 0.4 0"
-            text="value: ${float.id}; color: #fff; width: 4;"
-          ></a-entity>
-          <a-entity
-            position="0 0.2 0"
-            text="value: T: ${float.temperature}°C, S: ${float.salinity} PSU; color: #bae6fd; width: 4;"
-          ></a-entity>
-          <a-entity
+          <!-- translucent glowing cube -->
+          <a-box
+            color="#0ea5e9"
+            opacity="0.6"
+            material="shader: standard; metalness: 0.7; roughness: 0.2;"
             position="0 0 0"
-            text="value: Depth: ${float.depth}m; color: #fbbf24; width: 4;"
-          ></a-entity>
+            depth="0.25"
+            height="0.25"
+            width="0.25"
+            animation="property: rotation; dur: 10000; easing: linear; loop: true; to: 0 360 0"
+          ></a-box>
+
+          <!-- glowing outline -->
           <a-entity
-            position="0 -0.2 0"
-            text="value: Region: ${float.region}; color: #2dd4bf; width: 4;"
+            geometry="primitive: box; depth: 0.26; height: 0.26; width: 0.26"
+            material="shader: flat; color: #0ea5e9; opacity: 0.1; transparent: true"
+            position="0 0 0"
           ></a-entity>
+
+          <!-- floating info text -->
+          <a-text
+            value="ID: ${float.id}\nT: ${float.temperature}°C\nS: ${float.salinity} PSU\nDepth: ${float.depth}m"
+            color="#ffffff"
+            align="center"
+            position="0 0.4 0"
+            width="3"
+            anchor="center"
+            side="double"
+            shader="msdf"
+          ></a-text>
         </a-entity>
       `).join('\n')}
     </a-marker>
   `);
 
   return (
-    <div className="w-full h-[90vh] flex flex-col items-center justify-center bg-black">
-      <h2 className="text-xl font-semibold text-white mb-2">
-        Augmented Reality Ocean Data (Demo)
-      </h2>
-      <p className="text-gray-300 text-sm mb-4 max-w-xl text-center px-3">
-        Point your camera at a Hiro marker (print from{' '}
+    <div className="w-full h-[90vh] flex flex-col items-center justify-center bg-black text-white">
+      <h2 className="text-2xl font-bold mb-4">Enhanced AR Ocean Floats Visualization</h2>
+      <p className="max-w-lg text-center mb-8">
+        Point your camera to a Hiro marker to view animated, glowing AR ocean floats with detailed data. Print the marker from{' '}
         <a
           href="https://hiro-marker-tutorial.ar-js-org.vercel.app/img/hiro.png"
           className="underline text-blue-400"
@@ -96,23 +100,30 @@ export default function ARPage() {
           rel="noopener noreferrer"
         >
           here
-        </a>
-        ) to view real ocean floats in AR.
+        </a>.
       </p>
       <div
         ref={sceneRef}
         style={{ width: '100%', height: '80vh' }}
         dangerouslySetInnerHTML={{
           __html: `
-            <a-scene 
-              embedded 
-              vr-mode-ui="enabled: false" 
-              renderer="logarithmicDepthBuffer: true;"
+            <a-scene
+              embedded
+              vr-mode-ui="enabled: false"
+              renderer="logarithmicDepthBuffer: true"
               arjs="sourceType: webcam; debugUIEnabled: false;"
-              style="width: 100%; height: 80vh; background: transparent"
+              environment="preset: forest; groundColor: #445; skyColor: #222; horizonColor: #123"
+              fog="type: exponential; color: #0d1b2a; density: 0.5"
+              style="width: 100%; height: 80vh;"
             >
+              <a-entity light="type: directional; color: #0ea5e9; intensity: 1" position="5 10 7"></a-entity>
+              <a-entity light="type: ambient; color: #43556a; intensity: 0.7"></a-entity>
+
               ${decodeURIComponent(markerHtml)}
-              <a-entity camera></a-entity>
+
+              <a-entity camera>
+                <a-cursor color="#0ea5e9" fuse="true" fuse-timeout="2000"></a-cursor>
+              </a-entity>
             </a-scene>
           `,
         }}
