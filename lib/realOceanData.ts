@@ -2,6 +2,7 @@
 'use client'
 
 import { EventEmitter } from 'events'
+import { logger } from './logger'
 
 export interface RealArgoFloat {
   id: string
@@ -76,18 +77,18 @@ class RealOceanDataService extends EventEmitter {
 
   async start() {
     if (this.isRunning) return
-    
+
     this.isRunning = true
-    console.log('🌊 Starting real-time ocean data service...')
-    
+    logger.service('start', 'Real-time Ocean Data Service')
+
     // Initial data fetch
     await this.fetchAllData()
-    
+
     // Set up periodic updates (every 5 minutes for ARGO, every 1 minute for INCOIS)
     this.updateInterval = setInterval(async () => {
       await this.fetchAllData()
     }, 300000) // 5 minutes
-    
+
     // More frequent INCOIS updates
     setInterval(async () => {
       await this.fetchIncoisData()
@@ -96,13 +97,13 @@ class RealOceanDataService extends EventEmitter {
 
   stop() {
     if (!this.isRunning) return
-    
+
     this.isRunning = false
     if (this.updateInterval) {
       clearInterval(this.updateInterval)
       this.updateInterval = null
     }
-    console.log('🛑 Stopped real-time ocean data service')
+    logger.service('stop', 'Real-time Ocean Data Service')
   }
 
   private async fetchAllData() {
@@ -112,7 +113,7 @@ class RealOceanDataService extends EventEmitter {
         this.fetchIncoisData()
       ])
     } catch (error) {
-      console.error('Error fetching ocean data:', error)
+      logger.error('Failed to fetch ocean data', error as Error)
     }
   }
 
@@ -120,14 +121,14 @@ class RealOceanDataService extends EventEmitter {
     try {
       const response = await fetch(`${this.proxyUrl}/argo`)
       if (!response.ok) throw new Error('Failed to fetch ARGO data')
-      
+
       const data = await response.json()
       this.argoFloats = this.processArgoData(data)
-      
+
       this.emit('argo_update', this.argoFloats)
-      console.log(`📡 Updated ${this.argoFloats.length} ARGO floats`)
+      logger.dataStream('ARGO GDAC', this.argoFloats.length, 'ARGO floats')
     } catch (error) {
-      console.error('Error fetching ARGO data:', error)
+      logger.error('Failed to fetch ARGO data', error as Error)
       // Fallback to sample data for development
       this.argoFloats = this.generateSampleArgoData()
       this.emit('argo_update', this.argoFloats)
@@ -138,14 +139,14 @@ class RealOceanDataService extends EventEmitter {
     try {
       const response = await fetch(`${this.proxyUrl}/incois`)
       if (!response.ok) throw new Error('Failed to fetch INCOIS data')
-      
+
       const data = await response.json()
       this.incoisData = this.processIncoisData(data)
-      
+
       this.emit('incois_update', this.incoisData)
-      console.log(`🌊 Updated INCOIS ocean data for ${this.incoisData.length} regions`)
+      logger.dataStream('INCOIS', this.incoisData.length, 'ocean regions')
     } catch (error) {
-      console.error('Error fetching INCOIS data:', error)
+      logger.error('Failed to fetch INCOIS data', error as Error)
       // Fallback to sample data
       this.incoisData = this.generateSampleIncoisData()
       this.emit('incois_update', this.incoisData)
@@ -181,13 +182,13 @@ class RealOceanDataService extends EventEmitter {
     return rawData.map(region => ({
       temperature: {
         surface: parseFloat(region.sst) || 26 + Math.random() * 6,
-        subsurface: region.temp_profile || Array.from({length: 10}, (_, i) => 25 - i * 2),
-        depths: region.depths || Array.from({length: 10}, (_, i) => i * 100)
+        subsurface: region.temp_profile || Array.from({ length: 10 }, (_, i) => 25 - i * 2),
+        depths: region.depths || Array.from({ length: 10 }, (_, i) => i * 100)
       },
       salinity: {
         surface: parseFloat(region.sss) || 34.5 + Math.random() * 1,
-        subsurface: region.sal_profile || Array.from({length: 10}, (_, i) => 34.7 + Math.random() * 0.5),
-        depths: region.depths || Array.from({length: 10}, (_, i) => i * 100)
+        subsurface: region.sal_profile || Array.from({ length: 10 }, (_, i) => 34.7 + Math.random() * 0.5),
+        depths: region.depths || Array.from({ length: 10 }, (_, i) => i * 100)
       },
       currents: {
         u_component: parseFloat(region.u_current) || (Math.random() - 0.5) * 2,
@@ -208,7 +209,7 @@ class RealOceanDataService extends EventEmitter {
   private determineFloatStatus(float: any): 'active' | 'inactive' | 'warning' | 'error' {
     const lastUpdate = new Date(float.date || Date.now())
     const daysSinceUpdate = (Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24)
-    
+
     if (daysSinceUpdate > 30) return 'error'
     if (daysSinceUpdate > 15) return 'inactive'
     if (float.position_qc && float.position_qc > 'B') return 'warning'
@@ -222,11 +223,11 @@ class RealOceanDataService extends EventEmitter {
       if (lat >= -30 && lat < 0) return 'Central Indian Ocean'
       return 'Southern Indian Ocean'
     }
-    
+
     if (lon >= -180 && lon < -80) return 'Eastern Pacific'
     if (lon >= -80 && lon < 20) return 'Atlantic Ocean'
     if (lon >= 120 && lon <= 180) return 'Western Pacific'
-    
+
     return 'Global Ocean'
   }
 
@@ -243,7 +244,7 @@ class RealOceanDataService extends EventEmitter {
       const region = regions[Math.floor(Math.random() * regions.length)]
       const lat = region.latRange[0] + Math.random() * (region.latRange[1] - region.latRange[0])
       const lon = region.lonRange[0] + Math.random() * (region.lonRange[1] - region.lonRange[0])
-      
+
       return {
         id: `ARGO_${39000 + i}`,
         wmo_number: (39000 + i).toString(),
@@ -271,17 +272,17 @@ class RealOceanDataService extends EventEmitter {
 
   private generateSampleIncoisData(): IncoisOceanData[] {
     const regions = ['Arabian Sea', 'Bay of Bengal', 'Central Indian Ocean', 'Andaman Sea']
-    
+
     return regions.map(region => ({
       temperature: {
         surface: 26 + Math.random() * 6,
-        subsurface: Array.from({length: 20}, (_, i) => Math.max(5, 28 - i * 1.2 + Math.random() * 2)),
-        depths: Array.from({length: 20}, (_, i) => i * 50)
+        subsurface: Array.from({ length: 20 }, (_, i) => Math.max(5, 28 - i * 1.2 + Math.random() * 2)),
+        depths: Array.from({ length: 20 }, (_, i) => i * 50)
       },
       salinity: {
         surface: 34.5 + Math.random() * 1,
-        subsurface: Array.from({length: 20}, (_, i) => 34.7 + Math.random() * 0.5),
-        depths: Array.from({length: 20}, (_, i) => i * 50)
+        subsurface: Array.from({ length: 20 }, (_, i) => 34.7 + Math.random() * 0.5),
+        depths: Array.from({ length: 20 }, (_, i) => i * 50)
       },
       currents: {
         u_component: (Math.random() - 0.5) * 2,
@@ -312,7 +313,7 @@ class RealOceanDataService extends EventEmitter {
     const activeFloats = this.argoFloats.filter(f => f.status === 'active').length
     const avgTemp = this.argoFloats.reduce((sum, f) => sum + f.temperature, 0) / this.argoFloats.length || 0
     const avgSal = this.argoFloats.reduce((sum, f) => sum + f.salinity, 0) / this.argoFloats.length || 0
-    
+
     const regions: { [key: string]: any } = {}
     this.argoFloats.forEach(float => {
       if (!regions[float.region]) {

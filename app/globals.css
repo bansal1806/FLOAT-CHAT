@@ -237,6 +237,95 @@ a {
   );
 }
 
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* Focus visible styles - only show focus for keyboard navigation */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.2);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button,
+  a {
+    border: 2px solid currentColor;
+  }
+  
+  .bg-gradient-dual,
+  .text-gradient-dual {
+    background: none;
+    color: #0ea5e9;
+    -webkit-text-fill-color: inherit;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .floating-particle,
+  .ocean-wave,
+  .chat-bubble,
+  .loading-spinner {
+    animation: none !important;
+  }
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Skip to content link */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #0ea5e9;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100;
+  border-radius: 0 0 4px 0;
+}
+
+.skip-to-content:focus {
+  top: 0;
+}
+
+/* ===== END ACCESSIBILITY IMPROVEMENTS ===== */
+
 /* Responsive design helpers */
 @media (max-width: 768px) {
   .mobile-hidden {

@@ -1,5 +1,6 @@
 // pages/api/ocean-data/incois.ts
 import { NextApiRequest, NextApiResponse } from 'next'
+import { logger } from '@/lib/logger'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -9,14 +10,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // INCOIS doesn't have direct public API, so we'll simulate calls to their data endpoints
     // In production, you'd coordinate with INCOIS for API access
-    
+
     const regions = [
-      { 
+      {
         id: 'arabian_sea',
         name: 'Arabian Sea',
         bounds: { lat: [10, 25], lon: [60, 75] }
       },
-      { 
+      {
         id: 'bay_of_bengal',
         name: 'Bay of Bengal',
         bounds: { lat: [5, 22], lon: [80, 95] }
@@ -37,14 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       wave_dir: (Math.random() * 360).toFixed(1),
       timestamp: new Date().toISOString(),
       // Add depth profiles
-      temp_profile: Array.from({length: 20}, (_, i) => (28 - i * 1.2 + Math.random() * 2).toFixed(2)),
-      sal_profile: Array.from({length: 20}, (_, i) => (34.7 + Math.random() * 0.5).toFixed(2)),
-      depths: Array.from({length: 20}, (_, i) => i * 50)
+      temp_profile: Array.from({ length: 20 }, (_, i) => (28 - i * 1.2 + Math.random() * 2).toFixed(2)),
+      sal_profile: Array.from({ length: 20 }, (_, i) => (34.7 + Math.random() * 0.5).toFixed(2)),
+      depths: Array.from({ length: 20 }, (_, i) => i * 50)
     }))
 
     res.status(200).json(incoisData)
   } catch (error) {
-    console.error('INCOIS API Error:', error)
-    res.status(500).json({ error: 'Failed to fetch INCOIS data', details: error })
+    logger.error('INCOIS API Error', error as Error, { endpoint: '/api/ocean-data/incois' })
+    res.status(500).json({ error: 'Failed to fetch INCOIS data' })
   }
 }
+

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -43,33 +44,35 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={`${inter.className} bg-gradient-deep min-h-screen`}>
-        <div className="relative min-h-screen">
-          {/* Background ocean particles */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-ocean-400 rounded-full floating-particle opacity-60"></div>
-            <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-ocean-300 rounded-full floating-particle opacity-40" style={{animationDelay: '1s'}}></div>
-            <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-ocean-500 rounded-full floating-particle opacity-50" style={{animationDelay: '2s'}}></div>
-            <div className="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 bg-ocean-400 rounded-full floating-particle opacity-60" style={{animationDelay: '3s'}}></div>
+        <ErrorBoundary>
+          <div className="relative min-h-screen">
+            {/* Background ocean particles */}
+            <div className="fixed inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-ocean-400 rounded-full floating-particle opacity-60"></div>
+              <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-ocean-300 rounded-full floating-particle opacity-40" style={{ animationDelay: '1s' }}></div>
+              <div className="absolute bottom-1/4 left-1/3 w-3 h-3 bg-ocean-500 rounded-full floating-particle opacity-50" style={{ animationDelay: '2s' }}></div>
+              <div className="absolute bottom-1/3 right-1/4 w-1.5 h-1.5 bg-ocean-400 rounded-full floating-particle opacity-60" style={{ animationDelay: '3s' }}></div>
+            </div>
+
+            {/* Main content */}
+            <main className="relative z-10">
+              {children}
+            </main>
+
+            {/* Toast notifications */}
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: '#1e293b',
+                  color: '#f8fafc',
+                  border: '1px solid #0ea5e9',
+                },
+              }}
+            />
           </div>
-          
-          {/* Main content */}
-          <main className="relative z-10">
-            {children}
-          </main>
-          
-          {/* Toast notifications */}
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: '#1e293b',
-                color: '#f8fafc',
-                border: '1px solid #0ea5e9',
-              },
-            }}
-          />
-        </div>
+        </ErrorBoundary>
       </body>
     </html>
   )
